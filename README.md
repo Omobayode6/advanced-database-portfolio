@@ -1,4 +1,4 @@
-# CartIt — MIT 8103 Advanced Database Portfolio
+# CartIt - MIT 8103 Advanced Database Portfolio
 
 **Course:** MIT 8103 Advanced Database Systems, 2026/2027, first semester
 **Student:** Omobayode Festus Osinubi
@@ -37,9 +37,11 @@ Screenshots, in `portfolio-5-distributed-cloud/screenshots/`:
 
 ## How to rerun it
 
-Requirements: Node 20 or newer, and the Supabase connection string in `.env` at the repository root. `.env` is not committed.
+A marker can read the evidence files and screenshots without a database. A new Supabase project is only needed if someone wants to run the scripts again. That project starts empty, so the saved results appear only after the commands below.
 
-The direct host `db.<project-ref>.supabase.co` is IPv6-only. On an IPv4-only network, use the session pooler URI instead (port 5432, user `postgres.<project-ref>`). Do not use the transaction pooler on port 6543. The last-sneaker demo needs one connection to hold its row lock.
+Copy `.env.example` to `.env` and paste your own Supabase session-pooler URI. `.env` is not committed, and `.env.example` has no password.
+
+The direct host `db.<project-ref>.supabase.co` is IPv6-only. On an IPv4-only network, use the session pooler URI (port 5432, user `postgres.<project-ref>`), which is the shape in `.env.example`. Do not use the transaction pooler on port 6543. The last-sneaker demo needs one connection to hold its row lock.
 
 ```bash
 npm install

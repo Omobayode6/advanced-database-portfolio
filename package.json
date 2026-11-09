@@ -1,0 +1,27 @@
+{
+  "name": "advanced-database-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MIT 8103 CartIt advanced database portfolio",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "db:schema": "node scripts/apply-sql.js portfolio-1-database-design/schema.sql",
+    "db:seed": "node scripts/apply-sql.js portfolio-1-database-design/seed.sql",
+    "db:volume": "node scripts/apply-sql.js portfolio-2-query-optimisation/seed-volume.sql",
+    "db:queries": "node scripts/apply-sql.js portfolio-2-query-optimisation/queries.sql --out portfolio-2-query-optimisation/evidence/query-results.txt",
+    "db:explain": "node scripts/apply-sql.js portfolio-2-query-optimisation/explain.sql --out portfolio-2-query-optimisation/evidence/explain.txt",
+    "db:indexes": "node scripts/apply-sql.js portfolio-2-query-optimisation/indexes.sql",
+    "db:transactions": "node scripts/apply-sql.js portfolio-3-transactions-concurrency/transactions.sql --out portfolio-3-transactions-concurrency/evidence/transactions.txt",
+    "concurrency": "node portfolio-3-transactions-concurrency/concurrency-demo.js",
+    "nosql": "node portfolio-4-nosql/catalog.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "mongodb": "^6.12.0",
+    "mongodb-memory-server": "^10.1.4",
+    "pg": "^8.13.1"
+  }
+}
