@@ -1,0 +1,56 @@
+[
+  {
+    "sku": "SHOE-RUN-42",
+    "name": "CartIt Runner",
+    "category": "Footwear",
+    "price": 62000,
+    "currency": "NGN",
+    "inStock": true,
+    "attributes": { "size": 42, "colour": "Black", "gender": "Unisex" }
+  },
+  {
+    "sku": "SHOE-RUN-43",
+    "name": "CartIt Runner",
+    "category": "Footwear",
+    "price": 62000,
+    "currency": "NGN",
+    "inStock": true,
+    "attributes": { "size": 43, "colour": "Black", "gender": "Unisex" }
+  },
+  {
+    "sku": "ANKARA-L",
+    "name": "Ankara Shirt",
+    "category": "Clothing",
+    "price": 18000,
+    "currency": "NGN",
+    "inStock": true,
+    "attributes": { "size": "L", "fabric": "Cotton", "pattern": "Ankara" }
+  },
+  {
+    "sku": "LAP-AIR-8",
+    "name": "CartIt Laptop Air",
+    "category": "Electronics",
+    "price": 720000,
+    "currency": "NGN",
+    "inStock": true,
+    "attributes": { "ramGb": 8, "storageGb": 256, "colour": "Grey", "screenInches": 14 }
+  },
+  {
+    "sku": "LAP-PRO-16",
+    "name": "CartIt Laptop Pro",
+    "category": "Electronics",
+    "price": 980000,
+    "currency": "NGN",
+    "inStock": true,
+    "attributes": { "ramGb": 16, "storageGb": 512, "colour": "Silver", "screenInches": 14 }
+  },
+  {
+    "sku": "LAP-PRO-32",
+    "name": "CartIt Laptop Pro",
+    "category": "Electronics",
+    "price": 1450000,
+    "currency": "NGN",
+    "inStock": false,
+    "attributes": { "ramGb": 32, "storageGb": 1024, "colour": "Space black", "screenInches": 16 }
+  }
+]

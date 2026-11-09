@@ -1,0 +1,42 @@
+# CartIt product documents
+# 2026-11-09T13:16:55.082Z
+# Embedded MongoDB. Nothing is written to Supabase.
+
+Inserted 6 product documents
+
+In-stock electronics with at least 16 GB RAM:
+[
+  {
+    "sku": "LAP-PRO-16",
+    "name": "CartIt Laptop Pro",
+    "price": 980000,
+    "attributes": {
+      "ramGb": 16,
+      "storageGb": 512,
+      "colour": "Silver",
+      "screenInches": 14
+    }
+  }
+]
+
+Updated LAP-PRO-16. Matched 1, modified 1.
+{
+  "sku": "LAP-PRO-16",
+  "price": 1010000,
+  "attributes": {
+    "ramGb": 16,
+    "storageGb": 1024,
+    "colour": "Silver",
+    "screenInches": 14
+  }
+}
+
+The shoe document has no ramGb field. The laptop document has no size field.
+{
+  "sku": "SHOE-RUN-42",
+  "attributes": {
+    "size": 42,
+    "colour": "Black",
+    "gender": "Unisex"
+  }
+}
