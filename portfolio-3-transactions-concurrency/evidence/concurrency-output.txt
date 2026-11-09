@@ -1,0 +1,29 @@
+# CartIt concurrency demo
+# 2026-11-09T13:16:31.014Z
+# SKU DEMO-LAST-UNIT at warehouse LOS-1 starts at quantity 1.
+
+## Lost update (no row lock)
+Both sessions read 1, then both write 0 and insert a paid order.
+race.two@cartit.test read qty 1
+race.one@cartit.test read qty 1
+race.one@cartit.test committed and set stock to 0
+race.two@cartit.test committed and set stock to 0
+After the lost update: qty_on_hand=0, paid orders=2
+  race.one@cartit.test order 8013 (paid)
+  race.two@cartit.test order 8014 (paid)
+
+## Row lock (SELECT FOR UPDATE)
+The second session waits, then sees 0 and does not sell.
+race.two@cartit.test locked the row and read qty 1
+race.two@cartit.test committed the only sale
+race.one@cartit.test locked the row and read qty 0
+race.one@cartit.test rolled back. The unit was already sold.
+After the locked checkout: qty_on_hand=0, paid orders=1
+  race.two@cartit.test order 8015 (paid)
+
+## Repeatable read
+Session A reads the row. Session B sells the unit and commits. Session A then tries to update the same row.
+Session A (repeatable read) saw qty 1
+Session B committed qty 0
+Session A was rejected: could not serialize access due to concurrent update
+After the repeatable-read conflict: qty_on_hand=0, paid orders=0
