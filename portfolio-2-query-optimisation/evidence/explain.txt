@@ -1,0 +1,266 @@
+# portfolio-2-query-optimisation/explain.sql
+# 2026-11-09T13:15:50.963Z
+
+---
+-- Before-and-after plans for the March Lagos revenue report.
+-- Run seed-volume.sql first. On the twelve named shoppers alone, PostgreSQL often
+-- sequential-scans both versions because the tables fit in one page.
+
+SET search_path TO cartit, public
+
+SET
+
+---
+DROP INDEX IF EXISTS idx_orders_placed_at
+
+NOTICE: index "idx_orders_placed_at" does not exist, skipping
+DROP
+
+---
+DROP INDEX IF EXISTS idx_orders_customer_id
+
+NOTICE: index "idx_orders_customer_id" does not exist, skipping
+DROP
+
+---
+DROP INDEX IF EXISTS idx_orders_shipping_address_id
+
+NOTICE: index "idx_orders_shipping_address_id" does not exist, skipping
+DROP
+
+---
+DROP INDEX IF EXISTS idx_orders_status_placed_at
+
+NOTICE: index "idx_orders_status_placed_at" does not exist, skipping
+DROP
+
+---
+DROP INDEX IF EXISTS idx_addresses_city
+
+NOTICE: index "idx_addresses_city" does not exist, skipping
+DROP
+
+---
+DROP INDEX IF EXISTS idx_order_items_order_id
+
+NOTICE: index "idx_order_items_order_id" does not exist, skipping
+DROP
+
+---
+DROP INDEX IF EXISTS idx_order_items_variant_id
+
+NOTICE: index "idx_order_items_variant_id" does not exist, skipping
+DROP
+
+---
+DROP INDEX IF EXISTS idx_payments_order_id
+
+NOTICE: index "idx_payments_order_id" does not exist, skipping
+DROP
+
+---
+DROP INDEX IF EXISTS idx_stock_variant
+
+NOTICE: index "idx_stock_variant" does not exist, skipping
+DROP
+
+---
+ANALYZE orders, order_items, addresses, products, product_variants
+
+ANALYZE
+
+---
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT
+  a.city,
+  p.name AS product,
+  COUNT(DISTINCT o.order_id) AS orders,
+  SUM(oi.qty * oi.unit_price) AS revenue_ngn
+FROM orders AS o
+JOIN addresses AS a ON a.address_id = o.shipping_address_id
+JOIN order_items AS oi ON oi.order_id = o.order_id
+JOIN product_variants AS v ON v.variant_id = oi.variant_id
+JOIN products AS p ON p.product_id = v.product_id
+WHERE o.placed_at >= TIMESTAMP '2026-03-01 00:00+01'
+  AND o.placed_at < TIMESTAMP '2026-04-01 00:00+01'
+  AND a.city = 'Lagos'
+  AND o.status IN ('paid', 'packed', 'shipped', 'delivered')
+GROUP BY a.city, p.name
+ORDER BY revenue_ngn DESC
+
+Sort  (cost=553.90..553.93 rows=15 width=62) (actual time=4.925..4.930 rows=14 loops=1)
+  Sort Key: (sum(((oi.qty)::numeric * oi.unit_price))) DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=211
+  ->  GroupAggregate  (cost=551.41..553.60 rows=15 width=62) (actual time=4.832..4.918 rows=14 loops=1)
+        Group Key: p.name
+        Buffers: shared hit=211
+        ->  Sort  (cost=551.41..551.74 rows=134 width=40) (actual time=4.814..4.827 rows=147 loops=1)
+              Sort Key: p.name, o.order_id
+              Sort Method: quicksort  Memory: 34kB
+              Buffers: shared hit=211
+              ->  Hash Join  (cost=343.31..546.67 rows=134 width=40) (actual time=2.789..4.686 rows=147 loops=1)
+                    Hash Cond: (v.product_id = p.product_id)
+                    Buffers: shared hit=211
+                    ->  Hash Join  (cost=341.98..544.88 rows=134 width=33) (actual time=2.742..4.599 rows=147 loops=1)
+                          Hash Cond: (oi.variant_id = v.variant_id)
+                          Buffers: shared hit=210
+                          ->  Hash Join  (cost=340.53..543.00 rows=134 width=33) (actual time=2.727..4.541 rows=147 loops=1)
+                                Hash Cond: (oi.order_id = o.order_id)
+                                Buffers: shared hit=209
+                                ->  Seq Scan on order_items oi  (cost=0.00..171.10 rows=8010 width=26) (actual time=0.006..0.874 rows=8010 loops=1)
+                                      Buffers: shared hit=91
+                                ->  Hash  (cost=338.85..338.85 rows=134 width=15) (actual time=2.711..2.713 rows=147 loops=1)
+                                      Buckets: 1024  Batches: 1  Memory Usage: 15kB
+                                      Buffers: shared hit=118
+                                      ->  Hash Join  (cost=101.55..338.85 rows=134 width=15) (actual time=0.691..2.678 rows=147 loops=1)
+                                            Hash Cond: (o.shipping_address_id = a.address_id)
+                                            Buffers: shared hit=118
+                                            ->  Seq Scan on orders o  (cost=0.00..235.20 rows=800 width=16) (actual time=0.010..1.885 rows=796 loops=1)
+                                                  Filter: ((placed_at >= '2026-03-01 00:00:00'::timestamp without time zone) AND (placed_at < '2026-04-01 00:00:00'::timestamp without time zone) AND (status = ANY ('{paid,packed,shipped,delivered}'::text[])))
+                                                  Rows Removed by Filter: 7214
+                                                  Buffers: shared hit=75
+                                            ->  Hash  (cost=93.15..93.15 rows=672 width=15) (actual time=0.676..0.677 rows=672 loops=1)
+                                                  Buckets: 1024  Batches: 1  Memory Usage: 40kB
+                                                  Buffers: shared hit=43
+                                                  ->  Seq Scan on addresses a  (cost=0.00..93.15 rows=672 width=15) (actual time=0.006..0.553 rows=672 loops=1)
+                                                        Filter: (city = 'Lagos'::text)
+                                                        Rows Removed by Filter: 3340
+                                                        Buffers: shared hit=43
+                          ->  Hash  (cost=1.20..1.20 rows=20 width=16) (actual time=0.011..0.011 rows=20 loops=1)
+                                Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                Buffers: shared hit=1
+                                ->  Seq Scan on product_variants v  (cost=0.00..1.20 rows=20 width=16) (actual time=0.005..0.007 rows=20 loops=1)
+                                      Buffers: shared hit=1
+                    ->  Hash  (cost=1.15..1.15 rows=15 width=23) (actual time=0.038..0.038 rows=15 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                          Buffers: shared hit=1
+                          ->  Seq Scan on products p  (cost=0.00..1.15 rows=15 width=23) (actual time=0.030..0.032 rows=15 loops=1)
+                                Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=68
+Planning Time: 0.658 ms
+Execution Time: 5.003 ms
+
+---
+CREATE INDEX idx_orders_placed_at ON orders (placed_at)
+
+CREATE
+
+---
+CREATE INDEX idx_orders_customer_id ON orders (customer_id)
+
+CREATE
+
+---
+CREATE INDEX idx_orders_shipping_address_id ON orders (shipping_address_id)
+
+CREATE
+
+---
+CREATE INDEX idx_orders_status_placed_at ON orders (status, placed_at)
+
+CREATE
+
+---
+CREATE INDEX idx_addresses_city ON addresses (city)
+
+CREATE
+
+---
+CREATE INDEX idx_order_items_order_id ON order_items (order_id)
+
+CREATE
+
+---
+CREATE INDEX idx_order_items_variant_id ON order_items (variant_id)
+
+CREATE
+
+---
+CREATE INDEX idx_payments_order_id ON payments (order_id)
+
+CREATE
+
+---
+CREATE INDEX idx_stock_variant ON stock_levels (variant_id)
+
+CREATE
+
+---
+ANALYZE orders, order_items, addresses, products, product_variants
+
+ANALYZE
+
+---
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT
+  a.city,
+  p.name AS product,
+  COUNT(DISTINCT o.order_id) AS orders,
+  SUM(oi.qty * oi.unit_price) AS revenue_ngn
+FROM orders AS o
+JOIN addresses AS a ON a.address_id = o.shipping_address_id
+JOIN order_items AS oi ON oi.order_id = o.order_id
+JOIN product_variants AS v ON v.variant_id = oi.variant_id
+JOIN products AS p ON p.product_id = v.product_id
+WHERE o.placed_at >= TIMESTAMP '2026-03-01 00:00+01'
+  AND o.placed_at < TIMESTAMP '2026-04-01 00:00+01'
+  AND a.city = 'Lagos'
+  AND o.status IN ('paid', 'packed', 'shipped', 'delivered')
+GROUP BY a.city, p.name
+ORDER BY revenue_ngn DESC
+
+Sort  (cost=207.58..207.62 rows=15 width=62) (actual time=2.186..2.191 rows=14 loops=1)
+  Sort Key: (sum(((oi.qty)::numeric * oi.unit_price))) DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=1196 read=28
+  ->  GroupAggregate  (cost=205.09..207.29 rows=15 width=62) (actual time=2.098..2.176 rows=14 loops=1)
+        Group Key: p.name
+        Buffers: shared hit=1196 read=28
+        ->  Sort  (cost=205.09..205.42 rows=134 width=40) (actual time=2.081..2.093 rows=147 loops=1)
+              Sort Key: p.name, o.order_id
+              Sort Method: quicksort  Memory: 34kB
+              Buffers: shared hit=1196 read=28
+              ->  Hash Join  (cost=70.84..200.35 rows=134 width=40) (actual time=0.509..1.887 rows=147 loops=1)
+                    Hash Cond: (v.product_id = p.product_id)
+                    Buffers: shared hit=1196 read=28
+                    ->  Hash Join  (cost=69.50..198.56 rows=134 width=33) (actual time=0.487..1.826 rows=147 loops=1)
+                          Hash Cond: (oi.variant_id = v.variant_id)
+                          Buffers: shared hit=1195 read=28
+                          ->  Nested Loop  (cost=68.05..196.68 rows=134 width=33) (actual time=0.474..1.769 rows=147 loops=1)
+                                Buffers: shared hit=1194 read=28
+                                ->  Hash Join  (cost=67.77..133.96 rows=134 width=15) (actual time=0.466..1.132 rows=147 loops=1)
+                                      Hash Cond: (o.shipping_address_id = a.address_id)
+                                      Buffers: shared hit=773 read=8
+                                      ->  Index Scan using idx_orders_status_placed_at on orders o  (cost=0.28..64.37 rows=800 width=16) (actual time=0.070..0.572 rows=796 loops=1)
+                                            Index Cond: ((status = ANY ('{paid,packed,shipped,delivered}'::text[])) AND (placed_at >= '2026-03-01 00:00:00'::timestamp without time zone) AND (placed_at < '2026-04-01 00:00:00'::timestamp without time zone))
+                                            Buffers: shared hit=730 read=5
+                                      ->  Hash  (cost=59.09..59.09 rows=672 width=15) (actual time=0.391..0.392 rows=672 loops=1)
+                                            Buckets: 1024  Batches: 1  Memory Usage: 40kB
+                                            Buffers: shared hit=43 read=3
+                                            ->  Bitmap Heap Scan on addresses a  (cost=7.69..59.09 rows=672 width=15) (actual time=0.077..0.262 rows=672 loops=1)
+                                                  Recheck Cond: (city = 'Lagos'::text)
+                                                  Heap Blocks: exact=43
+                                                  Buffers: shared hit=43 read=3
+                                                  ->  Bitmap Index Scan on idx_addresses_city  (cost=0.00..7.52 rows=672 width=0) (actual time=0.060..0.061 rows=672 loops=1)
+                                                        Index Cond: (city = 'Lagos'::text)
+                                                        Buffers: shared read=3
+                                ->  Index Scan using idx_order_items_order_id on order_items oi  (cost=0.28..0.46 rows=1 width=26) (actual time=0.004..0.004 rows=1 loops=147)
+                                      Index Cond: (order_id = o.order_id)
+                                      Buffers: shared hit=421 read=20
+                          ->  Hash  (cost=1.20..1.20 rows=20 width=16) (actual time=0.010..0.010 rows=20 loops=1)
+                                Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                Buffers: shared hit=1
+                                ->  Seq Scan on product_variants v  (cost=0.00..1.20 rows=20 width=16) (actual time=0.004..0.006 rows=20 loops=1)
+                                      Buffers: shared hit=1
+                    ->  Hash  (cost=1.15..1.15 rows=15 width=23) (actual time=0.018..0.018 rows=15 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                          Buffers: shared hit=1
+                          ->  Seq Scan on products p  (cost=0.00..1.15 rows=15 width=23) (actual time=0.010..0.012 rows=15 loops=1)
+                                Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=91 read=13
+Planning Time: 1.027 ms
+Execution Time: 2.271 ms
+
