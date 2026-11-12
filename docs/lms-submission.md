@@ -7,7 +7,7 @@
 **Case study:** CartIt, a simulated Nigerian e-commerce platform
 **GitHub:** https://github.com/Omobayode6/advanced-database-portfolio
 
-CartIt is not a website. The portfolio is the database behind a shop: relational design, SQL and execution plans, transactions, a document catalog, and a cloud deployment with a distribution design. The same shop is used in every section. Prices are in naira. Warehouses are in Lagos, Abuja, and Port Harcourt.
+The portfolio is the database behind a shop: relational design, SQL and execution plans, transactions, a document catalog, and a cloud deployment with a distribution design. The same shop is used in every section. Prices are in naira. Warehouses are in Lagos, Abuja, and Port Harcourt.
 
 ## 1. Database design and modelling
 
